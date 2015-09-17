@@ -1,4 +1,4 @@
-# redux-validator
+# redux-validator [![Build Status](https://travis-ci.org/MaxLee1994/redux-validator.svg?branch=master)](https://travis-ci.org/MaxLee1994/redux-validator)
 Action parameter validator middleware for redux
 
 ## Installation
