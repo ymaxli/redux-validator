@@ -21,6 +21,17 @@ gulp.task('build test', ['clean'], function() {
 });
 
 gulp.task('test', ['build src', 'build test'], function () {
+    exec('istanbul cover ./node_modules/mocha/bin/_mocha build/test/spec.js --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage', function(err, stdout, stderr) {
+        console.log(stdout);
+        console.log(stderr);
+
+        if(err !== null) {
+            console.error('code coverage failed!');
+            process.exit(1);
+        } else {
+            done();
+        }
+    });
     var mocha = require('gulp-mocha');
     return gulp.src('build/test/spec.js', { read: false }).pipe(mocha());
 });

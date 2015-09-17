@@ -2,5 +2,6 @@ language: node_js
 node_js:
   - "iojs"
 before_script:
-  - npm install -g gulp
+  - npm i -g gulp
+  - npm i -g istanbul
 script: gulp
