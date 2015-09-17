@@ -62,7 +62,7 @@ import {createAction} from 'redux-actions';
 
 const actionCreator = createAction('action2', payload => payload, () => ({
     validator: {
-        payload: [ // if payload is not a map, use payload key to validate payload itself
+        payload: [ // if action.payload is not a map, use payload key to validate action.payload itself
             {
                 func: (payload, state) => payload >= 0,
                 msg: 'payload is less than 0'
@@ -99,7 +99,7 @@ const actionCreator = createAction('action2', payload => {
     const promise = new Promise((resolve, reject) {
         resolve(payload);    
     });
-    
+
     return {
         payload, // if you want a param to be validated, then return this param
         nextPayload: promise // nextPayload would not be validated, and would be dispatched as next action's payload if validator all succeed

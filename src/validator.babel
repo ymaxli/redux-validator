@@ -1,0 +1,89 @@
+/**
+ * @fileOverview redux validator middleware
+ * @author Max
+ **/
+
+import clone from 'lodash.clone';
+
+export default function(options) {
+    const validatorMiddleware = store => next => action => {
+        if(!action[options.key] || !action[options.key].validator) {
+            return next(action);
+        }
+
+        let flag = true;
+        let errorParam, errorId, errorMsg;
+        let nextAction;
+
+        let validators = action[options.key].validator;
+
+        let nextPayload;
+        try {
+            nextPayload = action.payload.nextPayload;
+        } catch (e) {}
+        if(nextPayload !== undefined) {
+            nextAction = clone(action);
+            nextAction.payload = nextPayload;
+        }
+
+        const runValidator = (func, msg, id, key) => {
+            let flag;
+            if(func) {
+                let param;
+                if(key === 'payload') {
+                    param = action.payload;
+                } else {
+                    try {
+                        param = action.payload[key];
+                    } catch (e) {}
+                }
+                flag = func(param, store.getState());
+            }
+            if(typeof flag !== 'boolean') {
+                throw new Error('validator func must return boolean type');
+            }
+            if(!flag) {
+                errorParam = key;
+                errorId = id;
+                errorMsg = msg || '';
+            }
+
+            return flag;
+        };
+
+        validation:
+        for(let i in validators) {
+            let validator = validators[i];
+
+            if(Array.prototype.isPrototypeOf(validator)) {
+                for(let j in validator) {
+                    let item = validator[j];
+                    flag = runValidator(item.func, item.msg, j, i);
+                    if(!flag) {
+                        break validation;
+                    }
+                }
+            } else {
+                flag = runValidator(validator.func, validator.msg, 0, i);
+                if(!flag) {
+                    break validation;
+                }
+            }
+        }
+
+
+        if(flag) {
+            action = nextAction || action;
+            return next(action);
+        } else {
+            return {
+                err: 'validator',
+                msg: errorMsg,
+                param: errorParam,
+                id: errorId
+            };
+        }
+    };
+
+    return validatorMiddleware;
+}

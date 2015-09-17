@@ -1,0 +1,14 @@
+/**
+ * @fileOverview wrap validator middleware, and handle with options
+ * @author Max
+ **/
+
+import validator from './validator';
+
+const defaultOptions = {
+    key: 'meta'
+};
+
+export default function(options = defaultOptions) {
+    return validator(options);
+}

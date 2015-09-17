@@ -1,0 +1,320 @@
+/**
+ * @fileOverview test suite
+ * @author Max
+ **/
+
+import expect from 'expect.js';
+import {compose, createStore, applyMiddleware} from 'redux';
+import Reducer from './data/reducer';
+import Validator from '../index';
+
+const finalCreateStoreWithDefaultKey = compose(
+    applyMiddleware(Validator())
+)(createStore);
+const finalCreateStoreWithCustomKey = compose(
+    applyMiddleware(Validator({
+        key: 'foo'
+    }))
+)(createStore);
+
+describe('redux-validator', () => {
+    it('plain payload', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: 1,
+            meta: {
+                validator: {
+                    payload: {
+                        func: payload => payload > 0,
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+        const action2 = {
+            type: 'action2',
+            payload: -1,
+            meta: {
+                validator: {
+                    payload: {
+                        func: payload => payload > 0,
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(result1.type).to.be('action1');
+        let result2 = dispatch(action2);
+        expect(result2).to.eql({
+            err: 'validator',
+            msg: 'payload must greater than 0',
+            id: 0,
+            param: 'payload'
+        });
+    });
+    it('multi param', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: {
+                foo: 1,
+                bar: 2
+            },
+            meta: {
+                validator: {
+                    foo: {
+                        func: payload => payload > 0,
+                        msg: 'payload must greater than 0'
+                    },
+                    bar: {
+                        func: payload => payload < 10
+                    }
+                }
+            }
+        };
+        const action2 = {
+            type: 'action2',
+            payload: {
+                foo: 1,
+                bar: 20
+            },
+            meta: {
+                validator: {
+                    foo: {
+                        func: payload => payload > 0,
+                        msg: 'payload must greater than 0'
+                    },
+                    bar: {
+                        func: payload => payload < 10
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(result1.type).to.be('action1');
+        let result2 = dispatch(action2);
+        expect(result2).to.eql({
+            err: 'validator',
+            msg: '',
+            id: 0,
+            param: 'bar'
+        });
+    });
+    it('mutil validators', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: {
+                foo: 1,
+                bar: 2
+            },
+            meta: {
+                validator: {
+                    foo: [
+                        {
+                            func: payload => payload > 0,
+                            msg: 'payload must greater than 0'
+                        },
+                        {
+                            func: payload => payload < 10,
+                            msg: 'payload must greater than 0'
+                        },
+                    ],
+                    bar: {
+                        func: payload => payload < 10
+                    }
+                }
+            }
+        };
+        const action2 = {
+            type: 'action2',
+            payload: {
+                foo: 100,
+                bar: 2
+            },
+            meta: {
+                validator: {
+                    foo: [
+                        {
+                            func: payload => payload > 0,
+                            msg: 'payload must greater than 0'
+                        },
+                        {
+                            func: payload => payload < 10,
+                            msg: 'payload must less than 10'
+                        },
+                    ],
+                    bar: {
+                        func: payload => payload < 10
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(result1.type).to.be('action1');
+        let result2 = dispatch(action2);
+        expect(result2).to.eql({
+            err: 'validator',
+            msg: 'payload must less than 10',
+            id: 1,
+            param: 'foo'
+        });
+    });
+    it('async action', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: {
+                foo: 1,
+                nextPayload: new Promise((resolve, reject)=>{}),
+                bar: 2,
+            },
+            meta: {
+                validator: {
+                    foo: [
+                        {
+                            func: payload => payload > 0,
+                            msg: 'payload must greater than 0'
+                        },
+                        {
+                            func: payload => payload < 10,
+                            msg: 'payload must greater than 0'
+                        },
+                    ],
+                    bar: {
+                        func: payload => payload < 10
+                    }
+                }
+            }
+        };
+        const action2 = {
+            type: 'action2',
+            payload: {
+                foo: 100,
+                nextPayload: new Promise((resolve, reject)=>{}),
+                bar: 2
+            },
+            meta: {
+                validator: {
+                    foo: [
+                        {
+                            func: payload => payload > 0,
+                            msg: 'payload must greater than 0'
+                        },
+                        {
+                            func: payload => payload < 10,
+                            msg: 'payload must less than 10'
+                        },
+                    ],
+                    bar: {
+                        func: payload => payload < 10
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(Promise.prototype.isPrototypeOf(result1.payload)).to.be.ok();
+        let result2 = dispatch(action2);
+        expect(result2).to.eql({
+            err: 'validator',
+            msg: 'payload must less than 10',
+            id: 1,
+            param: 'foo'
+        });
+    });
+    it('default validation', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action2 = {
+            type: 'action2',
+            payload: undefined,
+            meta: {
+                validator: {
+                    default: [
+                        {
+                            func: (payload, store) => store.foo < 0,
+                            msg: 'payload must greater than 0'
+                        },
+                        {
+                            func: (payload, store) => store.bar < 10,
+                            msg: 'payload must less than 10'
+                        },
+                    ]
+                }
+            }
+        };
+
+        let result2 = dispatch(action2);
+        expect(result2).to.eql({
+            err: 'validator',
+            msg: 'payload must greater than 0',
+            id: 0,
+            param: 'default'
+        });
+    });
+    it('custom validator key', () => {
+        const dispatch = finalCreateStoreWithCustomKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: -1,
+            foo: {
+                validator: {
+                    payload: {
+                        func: payload => payload > 0,
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+        const action2 = {
+            type: 'action2',
+            payload: -1,
+            meta: {
+                validator: {
+                    payload: {
+                        func: payload => payload > 0,
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(result1).to.eql({
+            err: 'validator',
+            msg: 'payload must greater than 0',
+            id: 0,
+            param: 'payload'
+        });
+        let result2 = dispatch(action2);
+        expect(result2.type).to.be('action2');
+    });
+    it('validator return boolean', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action2 = {
+            type: 'action2',
+            payload: -1,
+            meta: {
+                validator: {
+                    payload: {
+                        func: payload => 5,
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+
+        let msg;
+        try {
+            dispatch(action2);
+        } catch (e) {
+            msg = e.message;
+        }
+        expect(msg).to.be('validator func must return boolean type');
+    });
+});
