@@ -11,12 +11,8 @@ export default function(options) {
             return next(action);
         }
 
-        let flag = true;
-        let errorParam, errorId, errorMsg;
+        // nextPayload
         let nextAction;
-
-        let validators = action[options.key].validator;
-
         let nextPayload;
         try {
             nextPayload = action.payload.nextPayload;
@@ -25,19 +21,19 @@ export default function(options) {
             nextAction = clone(action);
             nextAction.payload = nextPayload;
         }
+        // -----------
 
-        const runValidator = (func, msg, id, key) => {
+        let flag = true;
+        let errorParam, errorId, errorMsg;
+
+        let validators = action[options.key].validator;
+
+        const runValidator = (param, func, msg, id, key) => {
             let flag;
             if(func) {
-                let param;
-                if(key === 'payload') {
-                    param = action.payload;
-                } else {
-                    try {
-                        param = action.payload[key];
-                    } catch (e) {}
-                }
                 flag = func(param, store.getState());
+            } else {
+                throw new Error('validator func is needed');
             }
             if(typeof flag !== 'boolean') {
                 throw new Error('validator func must return boolean type');
@@ -51,26 +47,45 @@ export default function(options) {
             return flag;
         };
 
-        validation:
-        for(let i in validators) {
-            let validator = validators[i];
-
+        const runValidatorContainer = (validator, param, key) => {
+            let flag;
             if(Array.prototype.isPrototypeOf(validator)) {
                 for(let j in validator) {
                     let item = validator[j];
-                    flag = runValidator(item.func, item.msg, j, i);
-                    if(!flag) {
-                        break validation;
-                    }
+                    flag = runValidator(param, item.func, item.msg, j, key);
+                    if(!flag) break;
                 }
             } else {
-                flag = runValidator(validator.func, validator.msg, 0, i);
-                if(!flag) {
-                    break validation;
+                flag = runValidator(param, validator.func, validator.msg, 0, key);
+            }
+            return flag;
+        };
+
+        if(typeof action.payload === 'object') {
+            for(let i in action.payload) {
+                let item = action.payload[i];
+
+                let validator = validators[i];
+                if(validator) {
+                    flag = runValidatorContainer(validator, item, i);
+                    if(!flag) break;
                 }
             }
         }
 
+        // payload
+        const payloadValidator = validators.payload;
+        if(payloadValidator) {
+            flag = runValidatorContainer(payloadValidator, action.payload, 'payload');
+        }
+        // -------
+
+        // default
+        const defaultValidator = validators.default;
+        if(defaultValidator) {
+            flag = runValidatorContainer(defaultValidator, undefined, 'default');
+        }
+        // -------
 
         if(flag) {
             action = nextAction || action;

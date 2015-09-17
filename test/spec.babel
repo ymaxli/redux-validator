@@ -217,6 +217,20 @@ describe('redux-validator', () => {
                 }
             }
         };
+        const action3 = {
+            type: 'action2',
+            payload: {
+                foo: 4,
+                nextPayload: new Promise((resolve, reject)=>{resolve(123);})
+            },
+            meta: {
+                validator: {
+                    foo: {
+                        func: payload => payload < 10
+                    }
+                }
+            }
+        };
 
         let result1 = dispatch(action1);
         expect(Promise.prototype.isPrototypeOf(result1.payload)).to.be.ok();
@@ -227,6 +241,8 @@ describe('redux-validator', () => {
             id: 1,
             param: 'foo'
         });
+        let result3 = dispatch(action3);
+        expect(Promise.prototype.isPrototypeOf(result3.payload)).to.be.ok();
     });
     it('default validation', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
@@ -316,5 +332,45 @@ describe('redux-validator', () => {
             msg = e.message;
         }
         expect(msg).to.be('validator func must return boolean type');
+    });
+    it('no param', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action2 = {
+            type: 'action2',
+            payload: undefined,
+            meta: {
+                validator: {
+                    foo: {
+                        func: payload => 5,
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+
+        let result2 = dispatch(action2);
+        expect(result2.type).to.be('action2');
+    });
+    it('validator func needed', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action2 = {
+            type: 'action2',
+            payload: -1,
+            meta: {
+                validator: {
+                    payload: {
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+
+        let msg;
+        try {
+            dispatch(action2);
+        } catch (e) {
+            msg = e.message;
+        }
+        expect(msg).to.be('validator func is needed');
     });
 });

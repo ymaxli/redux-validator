@@ -23,14 +23,8 @@ exports['default'] = function (options) {
                     return next(action);
                 }
 
-                var flag = true;
-                var errorParam = undefined,
-                    errorId = undefined,
-                    errorMsg = undefined;
+                // nextPayload
                 var nextAction = undefined;
-
-                var validators = action[options.key].validator;
-
                 var nextPayload = undefined;
                 try {
                     nextPayload = action.payload.nextPayload;
@@ -39,19 +33,21 @@ exports['default'] = function (options) {
                     nextAction = (0, _lodashClone2['default'])(action);
                     nextAction.payload = nextPayload;
                 }
+                // -----------
 
-                var runValidator = function runValidator(func, msg, id, key) {
+                var flag = true;
+                var errorParam = undefined,
+                    errorId = undefined,
+                    errorMsg = undefined;
+
+                var validators = action[options.key].validator;
+
+                var runValidator = function runValidator(param, func, msg, id, key) {
                     var flag = undefined;
                     if (func) {
-                        var param = undefined;
-                        if (key === 'payload') {
-                            param = action.payload;
-                        } else {
-                            try {
-                                param = action.payload[key];
-                            } catch (e) {}
-                        }
                         flag = func(param, store.getState());
+                    } else {
+                        throw new Error('validator func is needed');
                     }
                     if (typeof flag !== 'boolean') {
                         throw new Error('validator func must return boolean type');
@@ -65,24 +61,45 @@ exports['default'] = function (options) {
                     return flag;
                 };
 
-                validation: for (var i in validators) {
-                    var validator = validators[i];
-
+                var runValidatorContainer = function runValidatorContainer(validator, param, key) {
+                    var flag = undefined;
                     if (Array.prototype.isPrototypeOf(validator)) {
                         for (var j in validator) {
                             var item = validator[j];
-                            flag = runValidator(item.func, item.msg, j, i);
-                            if (!flag) {
-                                break validation;
-                            }
+                            flag = runValidator(param, item.func, item.msg, j, key);
+                            if (!flag) break;
                         }
                     } else {
-                        flag = runValidator(validator.func, validator.msg, 0, i);
-                        if (!flag) {
-                            break validation;
+                        flag = runValidator(param, validator.func, validator.msg, 0, key);
+                    }
+                    return flag;
+                };
+
+                if (typeof action.payload === 'object') {
+                    for (var i in action.payload) {
+                        var item = action.payload[i];
+
+                        var validator = validators[i];
+                        if (validator) {
+                            flag = runValidatorContainer(validator, item, i);
+                            if (!flag) break;
                         }
                     }
                 }
+
+                // payload
+                var payloadValidator = validators.payload;
+                if (payloadValidator) {
+                    flag = runValidatorContainer(payloadValidator, action.payload, 'payload');
+                }
+                // -------
+
+                // default
+                var defaultValidator = validators['default'];
+                if (defaultValidator) {
+                    flag = runValidatorContainer(defaultValidator, undefined, 'default');
+                }
+                // -------
 
                 if (flag) {
                     action = nextAction || action;
