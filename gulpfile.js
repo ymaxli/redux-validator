@@ -20,7 +20,7 @@ gulp.task('build test', ['clean'], function() {
                .pipe(gulp.dest(path.join('build', 'test')));
 });
 
-gulp.task('test', ['build src', 'build test'], function () {
+gulp.task('test', ['build src', 'build test'], function (done) {
     exec('istanbul cover ./node_modules/mocha/bin/_mocha build/test/spec.js --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage', function(err, stdout, stderr) {
         console.log(stdout);
         console.log(stderr);
