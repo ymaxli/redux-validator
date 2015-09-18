@@ -5,3 +5,9 @@ before_script:
   - npm i -g gulp
   - npm i -g istanbul
 script: gulp
+notifications:
+  email:
+    recipients:
+      - liyue4158@gmail.com
+    on_success: change
+    on_failure: always
