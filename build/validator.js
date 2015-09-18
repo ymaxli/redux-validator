@@ -11,9 +11,9 @@ Object.defineProperty(exports, '__esModule', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _lodashClone = require('lodash.clone');
+var _lodashClonedeep = require('lodash.clonedeep');
 
-var _lodashClone2 = _interopRequireDefault(_lodashClone);
+var _lodashClonedeep2 = _interopRequireDefault(_lodashClonedeep);
 
 exports['default'] = function (options) {
     var validatorMiddleware = function validatorMiddleware(store) {
@@ -30,7 +30,7 @@ exports['default'] = function (options) {
                     nextPayload = action.payload.nextPayload;
                 } catch (e) {}
                 if (nextPayload !== undefined) {
-                    nextAction = (0, _lodashClone2['default'])(action);
+                    nextAction = (0, _lodashClonedeep2['default'])(action);
                     nextAction.payload = nextPayload;
                 }
                 // -----------

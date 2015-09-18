@@ -33,6 +33,6 @@
     "redux": "^3.0.0"
   },
   "dependencies": {
-    "lodash.clone": "^3.0.3"
+    "lodash.clonedeep": "^3.0.2"
   }
 }
