@@ -1,6 +1,6 @@
 {
   "name": "redux-validator",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Action parameter validator middleware for redux",
   "main": "build/index.js",
   "scripts": {

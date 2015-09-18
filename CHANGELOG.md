@@ -5,3 +5,7 @@
 ## 0.1.1
 
 + change validate strategy from read validator map to read payload map.
+
+## 0.1.2
+
++ change lodash.clone to lodash.clonedeep
