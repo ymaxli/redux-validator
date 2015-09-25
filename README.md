@@ -34,7 +34,7 @@ const action = {
     meta: {
         validator: {
             foo: {// apply to param payload.foo
-                func: (foo, state) => foo > 0, // state is your app's state tree
+                func: (foo, state, payload) => foo > 0, // state is your app's state tree, payload is action.payload
                 msg: 'foo param error'
             },
             bar: {
