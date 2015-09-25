@@ -373,4 +373,24 @@ describe('redux-validator', () => {
         }
         expect(msg).to.be('validator func is needed');
     });
+    it('validator func pass action.payload', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action2 = {
+            type: 'action2',
+            payload: {
+                foo: 1,
+                bar: 2
+            },
+            meta: {
+                validator: {
+                    foo: {
+                        func: (foo, state, payload) => {expect(payload).to.eql({foo:1,bar:2}); return true;},
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+
+        dispatch(action2);
+    });
 });

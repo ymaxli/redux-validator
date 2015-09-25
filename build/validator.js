@@ -45,7 +45,7 @@ exports['default'] = function (options) {
                 var runValidator = function runValidator(param, func, msg, id, key) {
                     var flag = undefined;
                     if (func) {
-                        flag = func(param, store.getState());
+                        flag = func(param, store.getState(), action.payload);
                     } else {
                         throw new Error('validator func is needed');
                     }

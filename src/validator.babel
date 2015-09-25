@@ -31,7 +31,7 @@ export default function(options) {
         const runValidator = (param, func, msg, id, key) => {
             let flag;
             if(func) {
-                flag = func(param, store.getState());
+                flag = func(param, store.getState(), action.payload);
             } else {
                 throw new Error('validator func is needed');
             }
