@@ -17,3 +17,7 @@
 ## 0.1.4
 
 + check all validators not all params
+
+## 0.1.5
+
++ allow validators undefined
