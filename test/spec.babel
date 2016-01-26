@@ -165,6 +165,41 @@ describe('redux-validator', () => {
             param: 'foo'
         });
     });
+    it('unexist param', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: {
+                foo: 1
+            },
+            meta: {
+                validator: {
+                    foo: [
+                        {
+                            func: payload => payload > 0,
+                            msg: 'payload must greater than 0'
+                        },
+                        {
+                            func: payload => payload < 10,
+                            msg: 'payload must less than 10'
+                        },
+                    ],
+                    bar: {
+                        func: payload => payload < 10,
+                        msg: 'payload must less than 10'
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(result1).to.eql({
+            err: 'validator',
+            msg: 'payload must less than 10',
+            id: 0,
+            param: 'bar'
+        });
+    });
     it('async action', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
         const action1 = {

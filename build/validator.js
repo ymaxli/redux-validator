@@ -76,14 +76,11 @@ exports['default'] = function (options) {
                 };
 
                 if (typeof action.payload === 'object') {
-                    for (var i in action.payload) {
-                        var item = action.payload[i];
-
+                    for (var i in validators) {
                         var validator = validators[i];
-                        if (validator) {
-                            flag = runValidatorContainer(validator, item, i);
-                            if (!flag) break;
-                        }
+
+                        flag = runValidatorContainer(validator, action.payload[i], i);
+                        if (!flag) break;
                     }
                 }
 

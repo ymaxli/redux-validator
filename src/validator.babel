@@ -62,14 +62,11 @@ export default function(options) {
         };
 
         if(typeof action.payload === 'object') {
-            for(let i in action.payload) {
-                let item = action.payload[i];
-
+            for(let i in validators) {
                 let validator = validators[i];
-                if(validator) {
-                    flag = runValidatorContainer(validator, item, i);
-                    if(!flag) break;
-                }
+
+                flag = runValidatorContainer(validator, action.payload[i], i);
+                if(!flag) break;
             }
         }
 
