@@ -8,7 +8,19 @@ npm i redux-validator --save
 
 ## How to use
 
-apply `redux-validator` *before any middleware*, otherwise there would be unexpected errors!
+### Add middleware to your store
+
+
+```javascript
+import Validator from 'redux-validator';
+
+const validator = Validator();
+const createStoreWithMiddleware = applyMiddleware(validator)(createStore);
+const store = createStoreWithMiddleware(reducer);
+```
+
+If you use other middleware, apply `redux-validator` *first* to prevent unexpected errors.
+
 ```javascript
 import promise from 'redux-promise';
 import Validator from 'redux-validator';
@@ -18,45 +30,94 @@ const createStoreWithMiddleware = applyMiddleware(validator, promise)(createStor
 const store = createStoreWithMiddleware(reducer);
 ```
 
-## Example
-`redux-validator` is compatible with [FSA](https://github.com/acdlite/flux-standard-action)  
-it receives `validator` map in `action.meta`(which can be dicided by you), and uses validator functions in `validator` to validate param in `action.payload`  
-if validating failed, `redux-validator` would return an error object containing error information, and stop the dispatch process.
+### Add validators to your actions
 
-### example with two params
+
 ```javascript
-const action = {
-    type: 'action1',
+const validAction = {
+    type: ADD_TODO,
     payload: {
-        foo: 1,
-        bar: 2
+        text: 'Sample todo',
+        complete: false
     },
     meta: {
         validator: {
-            foo: {// apply to param payload.foo
-                func: (foo, state, payload) => foo > 0, // state is your app's state tree, payload is action.payload
-                msg: 'foo param error'
+            text: {
+                func: (text, state, payload) => 0 <= text.length
+                msg: 'Cannot add an empty todo'
             },
-            bar: {
-                func: (bar, state) => bar < 0,
-                msg: 'bar param error'
+            complete: {
+                func: (complete, state, payload) => typeof(complete) === "boolean"
+                msg: 'Complete must be true or false'
             }
         }
     }
-};
+}
 
-const result = dispatch(action);
-// dispatch would abort!
+const result = dispatch(validAction); // validation success and dispatch completes
+```
+
+`redux-validator` is [Flux Standard Action](https://github.com/acdlite/flux-standard-action) compatible.
+
+The properties in `action.payload` are validated against the functions provided in the `action.meta.validator` map. If validation of any property fails, the dispatch is aborted and an object containing error information is returned.
+
+```javascript
+const invalidAction = {
+    type: ADD_TODO,
+    payload: {
+        text: ''
+    },
+    meta: {
+        validator: {
+            text: {
+                func: (text, state, payload) => 0 <= text.length
+                msg: 'Cannot add an empty todo'
+            }
+        }
+    }
+}
+
+const result = dispatch(invalidAction); // dispatch aborted and error returned:
 // result = {
 //     err: 'validator',
-//     msg: 'bar param error',
-//     param: 'bar',
+//     msg: 'Cannot add an empty todo',
+//     param: 'text',
 //     id: 0
 // }
 ```
 
-if you're using [redux-actions](https://github.com/acdlite/redux-actions), it's very easy to integrate with `createAction`
-### example with redux-actions
+Multiple validations may be defined for a single property. The property will be checked against all validators in the array in the order they are declared. The dispatch is aborted and the error returned on the first failing validation.
+
+
+```javascript
+const action = {
+    type: ADD_TODO,
+    payload: {
+        text: 'Write an awesome react app'
+    },
+    meta: {
+        validator: {
+            text: [
+                {
+                    func: (text, state, payload) => 0 <= text.length
+                    msg: 'Cannot add an empty todo'
+                },
+                {
+                    func: (text, state, payload) => text.length < 500
+                    msg: 'Todo too long'
+                }
+            ]
+        }
+    }
+}
+```
+
+## Other Examples
+
+### Usage with redux-actions
+
+It's very easy to integrate `redux-validator` with `createAction` from [redux-actions](https://github.com/acdlite/redux-actions):
+
 ```javascript
 import {createAction} from 'redux-actions';
 
@@ -91,7 +152,8 @@ const result2 = dispath(actionCreator(200));
 // }
 ```
 
-### example with async actions, such as promise
+### Async actions (such as promise)
+
 ```javascript
 import {createAction} from 'redux-actions';
 
@@ -117,6 +179,7 @@ const actionCreator = createAction('action2', payload => {
         ]
     }
 }));
+
 const result1 = dispath(actionCreator(-1));
 const result2 = dispath(actionCreator(10));
 // result1 would abort!
@@ -134,25 +197,10 @@ const result2 = dispath(actionCreator(10));
 // }
 ```
 
-## API
+### Actions without properties
 
-### Options
-#### key
-decide where to put your own validator in `action` object, default to `'meta'`
+To validate an action without any property use `default`:
 
-example:
-```javascript
-import Validator from 'redux-validator';
-
-const validator = Validator({
-    key: 'val'// validator should be put inside action.val
-});
-```
-
-### validator with no param
-if you want to validate an action without any param, you can use `default` to trigger a validation
-
-example:
 ```javascript
 import {createAction} from 'redux-actions';
 
@@ -160,8 +208,24 @@ const action = createAction('action3', () => {}, () => ({
     validator: {
         default: {
             func: (default, state) => state.foo > 0,
-            msg: 'this is a validation without any param'
+            msg: 'this is a validation without any property'
         }
     }
 }));
+```
+
+## API
+
+### Middleware Options
+
+#### key
+
+Override the default location for the validators in the `action` objects (defaults is `'meta'`).
+
+```javascript
+import Validator from 'redux-validator';
+
+const validator = Validator({
+    key: 'val' // validator should be put inside action.val
+});
 ```
