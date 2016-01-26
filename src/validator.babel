@@ -26,7 +26,7 @@ export default function(options) {
         let flag = true;
         let errorParam, errorId, errorMsg;
 
-        let validators = action[options.key].validator;
+        let validators = action[options.key].validator || {};
 
         const runValidator = (param, func, msg, id, key) => {
             let flag;

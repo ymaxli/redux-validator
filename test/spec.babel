@@ -18,6 +18,17 @@ const finalCreateStoreWithCustomKey = compose(
 )(createStore);
 
 describe('redux-validator', () => {
+    it('validator undefined', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: 1,
+            meta: {
+            }
+        };
+        let result1 = dispatch(action1);
+        expect(result1.type).to.be('action1');
+    });
     it('plain payload', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
         const action1 = {

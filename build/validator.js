@@ -40,7 +40,7 @@ exports['default'] = function (options) {
                     errorId = undefined,
                     errorMsg = undefined;
 
-                var validators = action[options.key].validator;
+                var validators = action[options.key].validator || {};
 
                 var runValidator = function runValidator(param, func, msg, id, key) {
                     var flag = undefined;
