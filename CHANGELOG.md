@@ -13,3 +13,7 @@
 ## 0.1.3
 
 + pass action.payload in validator func
+
+## 0.1.4
+
++ check all validators not all params
