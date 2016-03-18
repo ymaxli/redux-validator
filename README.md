@@ -152,21 +152,17 @@ const result2 = dispath(actionCreator(200));
 // }
 ```
 
-### Async actions (such as promise)
+### Async actions (thunk support)
 
 ```javascript
 import {createAction} from 'redux-actions';
 
-const actionCreator = createAction('action2', payload => {
-    const promise = new Promise((resolve, reject) {
-        resolve(payload);    
-    });
-
-    return {
+const actionCreator = createAction('action2', payload => (
+    {
         payload, // if you want a param to be validated, then return this param
-        nextPayload: promise // nextPayload would not be validated, and would be dispatched as next action's payload if validator all succeed
-    };
-}, () => ({
+        thunk: dispatch => {} // thunk would not be validated, and would be dispatched if validator all succeed
+    }
+), () => ({
     validator: {
         payload: [
             {
@@ -189,43 +185,34 @@ const result2 = dispath(actionCreator(10));
 //     param: 'payload',
 //     id: 0
 // }
-// result2 would not abort, and it would continue to pass through next middleware
-// result2 = {
-//     type: 'action2',
-//     payload: promise,
-//     meta: ...
-// }
-```
-
-### Actions without properties
-
-To validate an action without any property use `default`:
-
-```javascript
-import {createAction} from 'redux-actions';
-
-const action = createAction('action3', () => {}, () => ({
-    validator: {
-        default: {
-            func: (default, state) => state.foo > 0,
-            msg: 'this is a validation without any property'
-        }
-    }
-}));
+// result2 would not abort, and it would continue to pass through thunk middleware
+// result2 = thunk
 ```
 
 ## API
 
 ### Middleware Options
 
-#### key
+#### validatorKey
 
-Override the default location for the validators in the `action` objects (defaults is `'meta'`).
+Override the default location for the validators in `action` objects (default is `'meta'`).
 
 ```javascript
 import Validator from 'redux-validator';
 
 const validator = Validator({
-    key: 'val' // validator should be put inside action.val
+    validatorKey: 'val' // validator should be put inside action.val
+});
+```
+
+### paramKey
+
+Override the default location for the parmas in `action` objects (default is `payload`).
+
+```javascript
+import Validator from 'redux-validator';
+
+const validator = Validator({
+    paramKey: 'val' // validator should be put inside action.val
 });
 ```

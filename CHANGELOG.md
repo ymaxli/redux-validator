@@ -21,3 +21,9 @@
 ## 0.1.5
 
 + allow validators undefined
+
+## 0.2.0
+
++ no longer support promise, instead support thunk
++ custom `paramKey` is supported
++ `options.key` changed to `options.validatorKey`

@@ -6,9 +6,15 @@
 import validator from './validator';
 
 const defaultOptions = {
-    key: 'meta'
+    validatorKey: 'meta',
+    paramKey: 'payload'
 };
 
-export default function(options = defaultOptions) {
-    return validator(options);
+export default function(options = {}) {
+    let realOptions = {};
+    for(let i in defaultOptions) {
+        realOptions[i] = options[i] || defaultOptions[i];
+    }
+
+    return validator(realOptions);
 }

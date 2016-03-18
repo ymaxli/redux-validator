@@ -9,38 +9,25 @@ Object.defineProperty(exports, '__esModule', {
     value: true
 });
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _lodashClonedeep = require('lodash.clonedeep');
-
-var _lodashClonedeep2 = _interopRequireDefault(_lodashClonedeep);
-
 exports['default'] = function (options) {
     var validatorMiddleware = function validatorMiddleware(store) {
         return function (next) {
             return function (action) {
-                if (!action[options.key] || !action[options.key].validator) {
-                    return next(action);
+                if (!action[options.validatorKey] || !action[options.validatorKey].validator) {
+                    // thunk compatible
+                    if (action[options.paramKey] && action[options.paramKey].thunk) {
+                        return next(action[options.paramKey].thunk);
+                    } else {
+                        return next(action);
+                    }
                 }
-
-                // nextPayload
-                var nextAction = undefined;
-                var nextPayload = undefined;
-                try {
-                    nextPayload = action.payload.nextPayload;
-                } catch (e) {}
-                if (nextPayload !== undefined) {
-                    nextAction = (0, _lodashClonedeep2['default'])(action);
-                    nextAction.payload = nextPayload;
-                }
-                // -----------
 
                 var flag = true;
                 var errorParam = undefined,
                     errorId = undefined,
                     errorMsg = undefined;
 
-                var validators = action[options.key].validator || {};
+                var validators = action[options.validatorKey].validator || {};
 
                 var runValidator = function runValidator(param, func, msg, id, key) {
                     var flag = undefined;
@@ -75,32 +62,29 @@ exports['default'] = function (options) {
                     return flag;
                 };
 
-                if (typeof action.payload === 'object') {
-                    for (var i in validators) {
-                        var validator = validators[i];
+                var params = action[options.paramKey] || {};
+                for (var i in validators) {
+                    if (i === options.paramKey || i === 'thunk') continue;
+                    var validator = validators[i];
 
-                        flag = runValidatorContainer(validator, action.payload[i], i);
-                        if (!flag) break;
-                    }
+                    flag = runValidatorContainer(validator, params[i], i);
+                    if (!flag) break;
                 }
 
-                // payload
-                var payloadValidator = validators.payload;
-                if (payloadValidator) {
-                    flag = runValidatorContainer(payloadValidator, action.payload, 'payload');
-                }
-                // -------
-
-                // default
-                var defaultValidator = validators['default'];
-                if (defaultValidator) {
-                    flag = runValidatorContainer(defaultValidator, undefined, 'default');
+                // param object itself
+                var paramObjValidator = validators[options.paramKey];
+                if (paramObjValidator && flag) {
+                    flag = runValidatorContainer(paramObjValidator, action[options.paramKey], options.paramKey);
                 }
                 // -------
 
                 if (flag) {
-                    action = nextAction || action;
-                    return next(action);
+                    // thunk compatible
+                    if (action[options.paramKey] && action[options.paramKey].thunk) {
+                        return next(action[options.paramKey].thunk);
+                    } else {
+                        return next(action);
+                    }
                 } else {
                     return {
                         err: 'validator',

@@ -16,13 +16,19 @@ var _validator = require('./validator');
 var _validator2 = _interopRequireDefault(_validator);
 
 var defaultOptions = {
-    key: 'meta'
+    validatorKey: 'meta',
+    paramKey: 'payload'
 };
 
 exports['default'] = function () {
-    var options = arguments.length <= 0 || arguments[0] === undefined ? defaultOptions : arguments[0];
+    var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-    return (0, _validator2['default'])(options);
+    var realOptions = {};
+    for (var i in defaultOptions) {
+        realOptions[i] = options[i] || defaultOptions[i];
+    }
+
+    return (0, _validator2['default'])(realOptions);
 };
 
 module.exports = exports['default'];

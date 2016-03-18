@@ -7,14 +7,20 @@ import expect from 'expect.js';
 import {compose, createStore, applyMiddleware} from 'redux';
 import Reducer from './data/reducer';
 import Validator from '../index';
+import ThunkMiddleware from 'redux-thunk';
 
 const finalCreateStoreWithDefaultKey = compose(
-    applyMiddleware(Validator())
+    applyMiddleware(Validator(), ThunkMiddleware)
 )(createStore);
-const finalCreateStoreWithCustomKey = compose(
+const finalCreateStoreWithCustomValidatorKey = compose(
     applyMiddleware(Validator({
-        key: 'foo'
-    }))
+        validatorKey: 'foo'
+    }), ThunkMiddleware)
+)(createStore);
+const finalCreateStoreWithCustomParamKey = compose(
+    applyMiddleware(Validator({
+        paramKey: 'bar'
+    }), ThunkMiddleware)
 )(createStore);
 
 describe('redux-validator', () => {
@@ -211,14 +217,14 @@ describe('redux-validator', () => {
             param: 'bar'
         });
     });
-    it('async action', () => {
+    it('thunk action', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
         const action1 = {
             type: 'action1',
             payload: {
                 foo: 1,
-                nextPayload: new Promise((resolve, reject)=>{}),
-                bar: 2,
+                thunk: dispatch => {return 'thunk success';},
+                bar: 2
             },
             meta: {
                 validator: {
@@ -242,7 +248,7 @@ describe('redux-validator', () => {
             type: 'action2',
             payload: {
                 foo: 100,
-                nextPayload: new Promise((resolve, reject)=>{}),
+                thunk: dispatch => {},
                 bar: 2
             },
             meta: {
@@ -264,22 +270,19 @@ describe('redux-validator', () => {
             }
         };
         const action3 = {
-            type: 'action2',
+            type: 'action3',
             payload: {
-                foo: 4,
-                nextPayload: new Promise((resolve, reject)=>{resolve(123);})
+                foo: 100,
+                thunk: dispatch => {return 'thunk success';},
+                bar: 2
             },
             meta: {
-                validator: {
-                    foo: {
-                        func: payload => payload < 10
-                    }
-                }
             }
         };
 
+
         let result1 = dispatch(action1);
-        expect(Promise.prototype.isPrototypeOf(result1.payload)).to.be.ok();
+        expect(result1).to.be('thunk success');
         let result2 = dispatch(action2);
         expect(result2).to.eql({
             err: 'validator',
@@ -288,7 +291,7 @@ describe('redux-validator', () => {
             param: 'foo'
         });
         let result3 = dispatch(action3);
-        expect(Promise.prototype.isPrototypeOf(result3.payload)).to.be.ok();
+        expect(result3).to.be('thunk success');
     });
     it('default validation', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
@@ -320,7 +323,7 @@ describe('redux-validator', () => {
         });
     });
     it('custom validator key', () => {
-        const dispatch = finalCreateStoreWithCustomKey(Reducer).dispatch;
+        const dispatch = finalCreateStoreWithCustomValidatorKey(Reducer).dispatch;
         const action1 = {
             type: 'action1',
             payload: -1,
@@ -356,6 +359,48 @@ describe('redux-validator', () => {
         let result2 = dispatch(action2);
         expect(result2.type).to.be('action2');
     });
+    it('custom param key', () => {
+        const dispatch = finalCreateStoreWithCustomParamKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            bar: -1,
+            meta: {
+                validator: {
+                    bar: {
+                        func: payload => payload > 0,
+                        msg: 'payload must greater than 0'
+                    }
+                }
+            }
+        };
+        const action2 = {
+            type: 'action2',
+            payload: -1,
+            meta: {
+                validator: {
+                    bar: {
+                        func: payload => payload !== undefined,
+                        msg: 'payload must not be undefined'
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(result1).to.eql({
+            err: 'validator',
+            msg: 'payload must greater than 0',
+            id: 0,
+            param: 'bar'
+        });
+        let result2 = dispatch(action2);
+        expect(result2).to.eql({
+            err: 'validator',
+            msg: 'payload must not be undefined',
+            id: 0,
+            param: 'bar'
+        });
+    });
     it('validator return boolean', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
         const action2 = {
@@ -383,19 +428,23 @@ describe('redux-validator', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
         const action2 = {
             type: 'action2',
-            payload: undefined,
             meta: {
                 validator: {
                     foo: {
-                        func: payload => 5,
-                        msg: 'payload must greater than 0'
+                        func: payload => payload !== undefined,
+                        msg: 'payload must not be undefined'
                     }
                 }
             }
         };
 
         let result2 = dispatch(action2);
-        expect(result2.type).to.be('action2');
+        expect(result2).to.be.eql({
+            err: 'validator',
+            msg: 'payload must not be undefined',
+            id: 0,
+            param: 'foo'
+        });
     });
     it('validator func needed', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;

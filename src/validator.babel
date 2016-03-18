@@ -3,30 +3,21 @@
  * @author Max
  **/
 
-import clone from 'lodash.clonedeep';
-
 export default function(options) {
     const validatorMiddleware = store => next => action => {
-        if(!action[options.key] || !action[options.key].validator) {
-            return next(action);
+        if(!action[options.validatorKey] || !action[options.validatorKey].validator) {
+            // thunk compatible
+            if(action[options.paramKey] && action[options.paramKey].thunk) {
+                return next(action[options.paramKey].thunk);
+            } else {
+                return next(action);
+            }
         }
-
-        // nextPayload
-        let nextAction;
-        let nextPayload;
-        try {
-            nextPayload = action.payload.nextPayload;
-        } catch (e) {}
-        if(nextPayload !== undefined) {
-            nextAction = clone(action);
-            nextAction.payload = nextPayload;
-        }
-        // -----------
 
         let flag = true;
         let errorParam, errorId, errorMsg;
 
-        let validators = action[options.key].validator || {};
+        let validators = action[options.validatorKey].validator || {};
 
         const runValidator = (param, func, msg, id, key) => {
             let flag;
@@ -61,32 +52,29 @@ export default function(options) {
             return flag;
         };
 
-        if(typeof action.payload === 'object') {
-            for(let i in validators) {
-                let validator = validators[i];
+        const params = action[options.paramKey] || {};
+        for(let i in validators) {
+            if(i === options.paramKey || i === 'thunk') continue;
+            let validator = validators[i];
 
-                flag = runValidatorContainer(validator, action.payload[i], i);
-                if(!flag) break;
-            }
+            flag = runValidatorContainer(validator, params[i], i);
+            if(!flag) break;
         }
 
-        // payload
-        const payloadValidator = validators.payload;
-        if(payloadValidator) {
-            flag = runValidatorContainer(payloadValidator, action.payload, 'payload');
-        }
-        // -------
-
-        // default
-        const defaultValidator = validators.default;
-        if(defaultValidator) {
-            flag = runValidatorContainer(defaultValidator, undefined, 'default');
+        // param object itself
+        const paramObjValidator = validators[options.paramKey];
+        if(paramObjValidator && flag) {
+            flag = runValidatorContainer(paramObjValidator, action[options.paramKey], options.paramKey);
         }
         // -------
 
         if(flag) {
-            action = nextAction || action;
-            return next(action);
+            // thunk compatible
+            if(action[options.paramKey] && action[options.paramKey].thunk) {
+                return next(action[options.paramKey].thunk);
+            } else {
+                return next(action);
+            }
         } else {
             return {
                 err: 'validator',
