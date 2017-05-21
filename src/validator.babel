@@ -5,7 +5,7 @@
 
 export default function(options) {
     const validatorMiddleware = store => next => action => {
-        if(!action[options.validatorKey] || !action[options.validatorKey].validator) {
+        if(!action[options.validatorKey] || !action[options.validatorKey].validator || action[options.validatorKey].disableValidate) {
             // thunk compatible
             if(action[options.paramKey] && action[options.paramKey].thunk) {
                 return next(action[options.paramKey].thunk);

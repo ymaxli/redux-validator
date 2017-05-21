@@ -13,7 +13,7 @@ exports['default'] = function (options) {
     var validatorMiddleware = function validatorMiddleware(store) {
         return function (next) {
             return function (action) {
-                if (!action[options.validatorKey] || !action[options.validatorKey].validator) {
+                if (!action[options.validatorKey] || !action[options.validatorKey].validator || action[options.validatorKey].disableValidate) {
                     // thunk compatible
                     if (action[options.paramKey] && action[options.paramKey].thunk) {
                         return next(action[options.paramKey].thunk);

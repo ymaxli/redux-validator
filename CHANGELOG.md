@@ -27,3 +27,7 @@
 + no longer support promise, instead support thunk
 + custom `paramKey` is supported
 + `options.key` changed to `options.validatorKey`
+
+## 0.2.1
+
++ skip this middleware when `disableValidator: true` in `meta`
