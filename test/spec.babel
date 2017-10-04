@@ -488,4 +488,31 @@ describe('redux-validator', () => {
 
         dispatch(action2);
     });
+
+    describe('validates non-inherited properties', () => {
+        let originalIncludes;
+        beforeEach(() => {
+            originalIncludes = Array.prototype.includes;
+            Array.prototype.includes = function() {};
+        });
+        afterEach(() => Array.prototype.includes = originalIncludes);
+
+        it('validator has non-inheritable properties', () => {
+            const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+            const action2 = {
+                type: 'action2',
+                payload: -1,
+                meta: {
+                    validator: {
+                        payload: [{
+                            msg: 'payload must greater than 0',
+                            func: () => true
+                        }]
+                    }
+                }
+            };
+
+            dispatch(action2);
+        });
+    });
 });

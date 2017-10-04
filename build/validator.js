@@ -52,9 +52,11 @@ exports['default'] = function (options) {
                     var flag = undefined;
                     if (Array.prototype.isPrototypeOf(validator)) {
                         for (var j in validator) {
-                            var item = validator[j];
-                            flag = runValidator(param, item.func, item.msg, j, key);
-                            if (!flag) break;
+                            if (validator.hasOwnProperty(j)) {
+                                var item = validator[j];
+                                flag = runValidator(param, item.func, item.msg, j, key);
+                                if (!flag) break;
+                            }
                         }
                     } else {
                         flag = runValidator(param, validator.func, validator.msg, 0, key);
@@ -64,11 +66,13 @@ exports['default'] = function (options) {
 
                 var params = action[options.paramKey] || {};
                 for (var i in validators) {
-                    if (i === options.paramKey || i === 'thunk') continue;
-                    var validator = validators[i];
+                    if (validators.hasOwnProperty(i)) {
+                        if (i === options.paramKey || i === 'thunk') continue;
+                        var validator = validators[i];
 
-                    flag = runValidatorContainer(validator, params[i], i);
-                    if (!flag) break;
+                        flag = runValidatorContainer(validator, params[i], i);
+                        if (!flag) break;
+                    }
                 }
 
                 // param object itself
