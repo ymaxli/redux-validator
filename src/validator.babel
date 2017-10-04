@@ -42,9 +42,11 @@ export default function(options) {
             let flag;
             if(Array.prototype.isPrototypeOf(validator)) {
                 for(let j in validator) {
-                    let item = validator[j];
-                    flag = runValidator(param, item.func, item.msg, j, key);
-                    if(!flag) break;
+                    if (validator.hasOwnProperty(j)) {
+                        let item = validator[j];
+                        flag = runValidator(param, item.func, item.msg, j, key);
+                        if(!flag) break;
+                    }
                 }
             } else {
                 flag = runValidator(param, validator.func, validator.msg, 0, key);
@@ -54,11 +56,13 @@ export default function(options) {
 
         const params = action[options.paramKey] || {};
         for(let i in validators) {
-            if(i === options.paramKey || i === 'thunk') continue;
-            let validator = validators[i];
+            if (validators.hasOwnProperty(i)) {
+                if(i === options.paramKey || i === 'thunk') continue;
+                let validator = validators[i];
 
-            flag = runValidatorContainer(validator, params[i], i);
-            if(!flag) break;
+                flag = runValidatorContainer(validator, params[i], i);
+                if(!flag) break;
+            }
         }
 
         // param object itself
