@@ -31,3 +31,7 @@
 ## 0.2.1
 
 + skip this middleware when `disableValidator: true` in `meta`
+
+## 0.2.2
+
++ ignore non-enumerable properties on validators
