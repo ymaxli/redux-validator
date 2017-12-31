@@ -42,7 +42,7 @@ exports['default'] = function (options) {
                     if (!flag) {
                         errorParam = key;
                         errorId = id;
-                        errorMsg = msg || '';
+                        errorMsg = (typeof msg === 'function' ? msg(param, store.getState(), action.payload) : msg) || '';
                     }
 
                     return flag;
