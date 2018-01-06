@@ -424,6 +424,29 @@ describe('redux-validator', () => {
         }
         expect(msg).to.be('validator func must return boolean type');
     });
+    it('message function', () => {
+        const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
+        const action1 = {
+            type: 'action1',
+            payload: -1,
+            meta: {
+                validator: {
+                    payload: {
+                        func: payload => payload === 1,
+                        msg: payload => 'expected 1, got ' + payload
+                    }
+                }
+            }
+        };
+
+        let result1 = dispatch(action1);
+        expect(result1).to.eql({
+            err: 'validator',
+            msg: 'expected 1, got -1',
+            id: 0,
+            param: 'payload'
+        });
+    });
     it('no param', () => {
         const dispatch = finalCreateStoreWithDefaultKey(Reducer).dispatch;
         const action2 = {
