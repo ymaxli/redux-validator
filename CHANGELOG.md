@@ -35,3 +35,7 @@
 ## 0.2.2
 
 + ignore non-enumerable properties on validators
+
+## 0.2.3
+
++ add dynamic error message support
